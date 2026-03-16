@@ -1,648 +1,856 @@
-<!-- Medical Solutions Clinician Dashboard - SSP Exploration -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MedSol SSP Exploration</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700&family=Montserrat:wght@700;800&display=swap" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Medical Solutions — Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet" />
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            purple: { DEFAULT: '#6B2D8B', light: '#8B3DAB', dark: '#4A1F61', faint: '#F5EEFA' },
+            green: { DEFAULT: '#8DC63F', dark: '#6EA030', faint: '#F2F9E8' },
+            navy: { DEFAULT: '#1C2739', light: '#2A3850' },
+            bg: '#F0F2F5',
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            heading: ['Montserrat', 'system-ui', 'sans-serif'],
+          },
+        },
+      },
+    };
+  </script>
+
   <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
+    * { box-sizing: border-box; }
+    body { background: #F0F2F5; font-family: 'Inter', system-ui, sans-serif; }
+
+    /* ── Animations ── */
+    @keyframes fadeDown {
+      from { opacity: 0; transform: translateY(-12px); }
+      to   { opacity: 1; transform: translateY(0); }
     }
-    body {
-      margin: 0;
-      padding: 0;
-      font-family: "Inter", system-ui, sans-serif;
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-      background-color: #F4F5F7;
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+    @keyframes progressFill {
+      from { width: 0%; }
+      to   { width: var(--target-width); }
+    }
+    @keyframes strokeDash {
+      from { stroke-dashoffset: 100; }
+      to   { stroke-dashoffset: var(--target-dash); }
+    }
+    @keyframes pulse-glow {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(107,45,139,0.18); }
+      50%       { box-shadow: 0 0 0 6px rgba(107,45,139,0.10); }
+    }
+    @keyframes bannerSlide {
+      from { opacity: 0; transform: translateY(-20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes bannerDismiss {
+      from { opacity: 1; transform: translateY(0); max-height: 80px; }
+      to   { opacity: 0; transform: translateY(-10px); max-height: 0; padding: 0; margin: 0; }
+    }
+    @keyframes gentlePulse {
+      0%, 100% { transform: scale(1); }
+      50%       { transform: scale(1.025); }
+    }
+
+    .nav-anim       { animation: fadeDown 0.45s ease-out both; }
+    .hero-anim      { animation: fadeUp 0.5s 0.1s ease-out both; }
+    .banner-anim    { animation: bannerSlide 0.4s 0.15s ease-out both; }
+    .card-anim-1    { animation: fadeUp 0.45s 0.25s ease-out both; }
+    .card-anim-2    { animation: fadeUp 0.45s 0.38s ease-out both; }
+    .card-anim-3    { animation: fadeUp 0.45s 0.51s ease-out both; }
+    .card-anim-4    { animation: fadeUp 0.45s 0.64s ease-out both; }
+    .sidebar-anim-1 { animation: fadeIn 0.4s 0.55s ease-out both; }
+    .sidebar-anim-2 { animation: fadeIn 0.4s 0.7s  ease-out both; }
+    .sidebar-anim-3 { animation: fadeIn 0.4s 0.85s ease-out both; }
+    .task-anim-1    { animation: fadeUp 0.4s 0.3s  ease-out both; }
+    .task-anim-2    { animation: fadeUp 0.4s 0.42s ease-out both; }
+    .task-anim-3    { animation: fadeUp 0.4s 0.54s ease-out both; }
+
+    .priority-glow  { animation: pulse-glow 2.8s ease-in-out infinite; }
+
+    .progress-bar   {
+      animation: progressFill 1s 0.4s cubic-bezier(0.4,0,0.2,1) both;
+    }
+
+    /* Job card hover */
+    .job-card {
+      transition: transform 0.22s ease, box-shadow 0.22s ease;
+    }
+    .job-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 28px rgba(28,39,57,0.12);
+    }
+    .job-card .bookmark-icon {
+      opacity: 0;
+      transition: opacity 0.18s ease;
+    }
+    .job-card:hover .bookmark-icon {
+      opacity: 1;
+    }
+
+    /* Button states */
+    .btn-primary {
+      transition: transform 0.15s ease, filter 0.15s ease;
+    }
+    .btn-primary:hover  { transform: scale(1.03); filter: brightness(1.08); }
+    .btn-primary:active { transform: scale(0.97); }
+
+    .btn-secondary {
+      transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+    }
+    .btn-secondary:hover {
+      background: #6B2D8B !important;
+      color: white !important;
+      border-color: #6B2D8B !important;
+    }
+
+    /* Nav hover */
+    .nav-link {
+      position: relative;
+      transition: color 0.18s ease;
+    }
+    .nav-link::after {
+      content: '';
+      position: absolute;
+      bottom: -4px; left: 0;
+      width: 0; height: 2px;
+      background: #6B2D8B;
+      transition: width 0.2s ease;
+      border-radius: 2px;
+    }
+    .nav-link:hover::after { width: 100%; }
+    .nav-link:hover { color: #6B2D8B !important; }
+
+    /* Contract badge hover */
+    .badge-travel { transition: background 0.15s ease, color 0.15s ease; }
+    .badge-travel:hover { background: #6B2D8B !important; color: white !important; }
+    .badge-prn    { transition: background 0.15s ease, color 0.15s ease; }
+    .badge-prn:hover { background: #8DC63F !important; color: white !important; }
+    .badge-perm   { transition: background 0.15s ease, color 0.15s ease; }
+    .badge-perm:hover { background: #1C2739 !important; color: white !important; }
+
+    /* State toggle pill */
+    .toggle-container { position: relative; }
+    .toggle-pill {
+      position: absolute;
+      top: 3px; bottom: 3px;
+      border-radius: 8px;
+      background: white;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.14);
+      transition: left 0.3s cubic-bezier(0.4,0,0.2,1), width 0.3s cubic-bezier(0.4,0,0.2,1);
+      z-index: 1;
+    }
+
+    /* State transition */
+    .state-content {
+      animation: fadeIn 0.3s ease both;
+    }
+
+    /* Banner dismiss */
+    .banner-dismissed {
+      animation: bannerDismiss 0.35s ease-out forwards;
+      overflow: hidden;
+    }
+
+    /* CTA pulse on first view */
+    .cta-pulse { animation: gentlePulse 2.2s 1.2s ease-in-out 3; }
+
+    /* Suggested question chips */
+    .ai-chip {
+      transition: background 0.15s ease, border-color 0.15s ease;
+      cursor: pointer;
+    }
+    .ai-chip:hover { background: #F5EEFA; border-color: #6B2D8B; }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
+
+    /* Reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+      }
     }
   </style>
 </head>
 <body>
-<div style="align-items: center; background-color: #F4F5F7; box-sizing: border-box; display: flex; flex-direction: column; font-size: 12px; font-synthesis: none; gap: 24px; height: 1183px; line-height: 16px; -moz-osx-font-smoothing: grayscale; overflow: clip; -webkit-font-smoothing: antialiased; width: 1440px">
-      <div style="align-items: center; background-color: #FFFFFF; border-bottom-color: #E8E9EB; border-bottom-style: solid; border-bottom-width: 1px; box-sizing: border-box; display: flex; flex-shrink: 0; height: 68px; justify-content: space-between; padding-inline: 48px; width: 100%">
-        <div style="align-items: center; box-sizing: border-box; display: flex; gap: 40px">
-          <div style="align-items: center; box-sizing: border-box; display: flex; gap: 8px">
-            <div style="align-items: center; background-color: #6B2D8B; border-radius: 8px; box-sizing: border-box; display: flex; flex-shrink: 0; height: 32px; justify-content: center; width: 32px">
-              <div style="box-sizing: border-box; color: #FFFFFF; display: inline-block; font-family: &quot;MontserratRoman-ExtraBold&quot;, &quot;Montserrat&quot;, system-ui, sans-serif; font-size: 14px; font-weight: 800; line-height: 18px">
-                M
-              </div>
-            </div>
-            <div style="box-sizing: border-box; color: #172031; display: inline-block; font-family: &quot;MontserratRoman-Bold&quot;, &quot;Montserrat&quot;, system-ui, sans-serif; font-size: 18px; font-weight: 700; letter-spacing: -0.02em; line-height: 22px">
-              Medical Solutions
-            </div>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useRef, useEffect } = React;
+
+/* ── Icons (inline SVG) ── */
+const IconSearch     = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>;
+const IconChevronD   = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>;
+const IconPin        = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"/><circle cx="12" cy="10" r="3"/></svg>;
+const IconClock      = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>;
+const IconCalendar   = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>;
+const IconHospital   = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>;
+const IconDollar     = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>;
+const IconBookmark   = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m19 21-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg>;
+const IconArrowRight = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>;
+const IconX          = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>;
+const IconSparkle    = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5z"/><path d="M19 15l.75 2.25L22 18l-2.25.75L19 21l-.75-2.25L16 18l2.25-.75z"/></svg>;
+const IconCheck      = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>;
+const IconMessage    = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>;
+const IconPhone      = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.45 2 2 0 0 1 3.59 1.27h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 9a16 16 0 0 0 6 6l.9-.9a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 21.73 16z"/></svg>;
+const IconMail       = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2-2-2z"/><polyline points="22,6 12,13 2,6"/></svg>;
+const IconStar       = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>;
+const IconInfo       = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>;
+const IconTrending   = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>;
+
+/* ── Circular progress ── */
+function CircularProgress({ pct }) {
+  const r = 20, circ = 2 * Math.PI * r;
+  const offset = circ - (pct / 100) * circ;
+  return (
+    <svg width="52" height="52" viewBox="0 0 52 52" className="rotate-[-90deg]">
+      <circle cx="26" cy="26" r={r} fill="none" stroke="#E9D8F5" strokeWidth="5"/>
+      <circle
+        cx="26" cy="26" r={r} fill="none"
+        stroke="#6B2D8B" strokeWidth="5"
+        strokeDasharray={circ}
+        strokeDashoffset={offset}
+        strokeLinecap="round"
+        style={{ transition: 'stroke-dashoffset 1s 0.4s cubic-bezier(0.4,0,0.2,1)' }}
+      />
+    </svg>
+  );
+}
+
+/* ── Contract type badge ── */
+function Badge({ type }) {
+  const styles = {
+    TRAVEL:    'badge-travel bg-purple-faint text-purple border border-purple/20',
+    PRN:       'badge-prn   bg-green-faint  text-green-dark border border-green/30',
+    PERMANENT: 'badge-perm  bg-navy/8       text-navy border border-navy/15',
+  };
+  return (
+    <span className={`inline-block px-2 py-0.5 rounded-md text-[10px] font-semibold tracking-wide uppercase ${styles[type] || styles.TRAVEL}`}>
+      {type}
+    </span>
+  );
+}
+
+/* ── Job recommendation card ── */
+function JobCard({ job, delay = 'card-anim-1' }) {
+  const [saved, setSaved] = useState(false);
+  return (
+    <div className={`job-card bg-white rounded-2xl border border-gray-100 p-5 flex flex-col gap-3 relative ${delay}`}>
+      {/* bookmark */}
+      <button
+        onClick={() => setSaved(s => !s)}
+        className={`bookmark-icon absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-lg transition-colors ${saved ? 'opacity-100 text-purple bg-purple-faint' : 'text-gray-400 hover:bg-gray-50'}`}
+        title="Save job"
+      >
+        <IconBookmark />
+      </button>
+
+      {/* top */}
+      <div className="flex items-start gap-2">
+        <Badge type={job.type} />
+      </div>
+
+      {/* title */}
+      <div>
+        <h3 className="font-heading font-700 text-base text-navy leading-tight uppercase tracking-tight">{job.title}</h3>
+        <p className="text-xs text-gray-400 mt-0.5 uppercase tracking-wider font-medium">{job.specialty}</p>
+      </div>
+
+      {/* pay — hero element */}
+      <div>
+        <span className="font-heading font-800 text-2xl text-purple">{job.payPrimary}</span>
+        {job.paySecondary && <span className="text-gray-400 text-sm font-medium">–{job.paySecondary}</span>}
+        <p className="text-xs text-gray-400 mt-0.5">{job.payLabel}</p>
+      </div>
+
+      {/* meta */}
+      <div className="flex flex-col gap-1.5 text-xs text-gray-500">
+        <span className="flex items-center gap-1.5 font-medium text-navy/80"><IconPin />{job.location}</span>
+        <span className="flex items-center gap-1.5"><IconClock />{job.schedule}</span>
+        <span className="flex items-center gap-1.5"><IconCalendar />{job.startDate}</span>
+        <span className="flex items-center gap-1.5"><IconHospital />{job.facility}</span>
+      </div>
+
+      {/* why rec */}
+      <div className="flex items-start gap-1.5 bg-green-faint border border-green/20 rounded-lg px-3 py-2 text-xs text-green-dark">
+        <span className="mt-0.5 shrink-0"><IconTrending /></span>
+        <span>{job.whyRec}</span>
+      </div>
+
+      {/* CTA */}
+      <button className="btn-primary cta-pulse mt-auto w-full bg-purple text-white rounded-xl py-2.5 text-sm font-semibold flex items-center justify-center gap-2">
+        View & Apply <IconArrowRight />
+      </button>
+    </div>
+  );
+}
+
+/* ── Progress bar ── */
+function ProgressBar({ pct, className = '' }) {
+  return (
+    <div className={`h-2 bg-gray-100 rounded-full overflow-hidden ${className}`}>
+      <div
+        className="h-full bg-purple rounded-full progress-bar"
+        style={{ '--target-width': `${pct}%`, width: `${pct}%` }}
+      />
+    </div>
+  );
+}
+
+/* ── State A: Job seeker ── */
+function StateA() {
+  return (
+    <div className="state-content flex flex-col gap-6">
+
+      {/* Applied ribbon */}
+      <div className="bg-navy rounded-2xl px-6 py-4 flex items-center gap-4 flex-wrap banner-anim">
+        <div className="flex items-center gap-3 flex-1 min-w-0">
+          <span className="shrink-0 px-2 py-0.5 bg-green text-white text-[10px] font-semibold uppercase tracking-wider rounded-md">
+            You Applied
+          </span>
+          <div className="min-w-0">
+            <p className="font-heading font-700 text-white text-sm truncate">Travel RN — Telemetry / PCU</p>
+            <p className="text-gray-400 text-xs mt-0.5 truncate">Abbott Northwestern Hospital · Minneapolis, MN</p>
           </div>
-          <div style="align-items: center; box-sizing: border-box; display: flex; gap: 2px">
-            <div style="align-items: center; border-radius: 6px; box-sizing: border-box; display: flex; gap: 4px; padding-block: 6px; padding-inline: 12px">
-              <div style="box-sizing: border-box; color: #677080; display: inline-block; font-family: &quot;Inter&quot;, system-ui, sans-serif; font-size: 14px; font-weight: 500; line-height: 18px">
-                Profile
-              </div>
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#9AA0AA" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="6 9 12 15 18 9" />
-              </svg>
+        </div>
+        <div className="flex items-center gap-5 text-xs text-gray-300 shrink-0 flex-wrap gap-y-1">
+          <span className="flex items-center gap-1.5"><IconDollar />$2,418–$2,750/wk</span>
+          <span className="flex items-center gap-1.5"><IconClock />3×12 Nights · 13 weeks</span>
+          <span className="flex items-center gap-1.5"><IconCalendar />Starts Apr 7, 2026</span>
+        </div>
+      </div>
+
+      {/* Profile completion */}
+      <div className="bg-white rounded-2xl border border-gray-100 p-6 hero-anim">
+        <div className="flex items-start justify-between gap-4 mb-5">
+          <div>
+            <h2 className="font-heading font-700 text-lg text-navy">Complete to get submitted</h2>
+            <p className="text-sm text-gray-500 mt-0.5">Finish these steps and we'll submit you to Abbott within the hour.</p>
+          </div>
+          <div className="shrink-0 flex flex-col items-center gap-1">
+            <div className="relative w-[52px] h-[52px]">
+              <CircularProgress pct={40} />
+              <span className="absolute inset-0 flex items-center justify-center font-heading font-700 text-sm text-purple">40%</span>
             </div>
-            <div style="align-items: center; border-radius: 6px; box-sizing: border-box; display: flex; gap: 4px; padding-block: 6px; padding-inline: 12px">
-              <div style="box-sizing: border-box; color: #677080; display: inline-block; font-family: &quot;Inter&quot;, system-ui, sans-serif; font-size: 14px; font-weight: 500; line-height: 18px">
-                Assignments
-              </div>
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#9AA0AA" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="6 9 12 15 18 9" />
-              </svg>
-            </div>
-            <div style="align-items: center; border-radius: 6px; box-sizing: border-box; display: flex; gap: 4px; padding-block: 6px; padding-inline: 12px">
-              <div style="box-sizing: border-box; color: #677080; display: inline-block; font-family: &quot;Inter&quot;, system-ui, sans-serif; font-size: 14px; font-weight: 500; line-height: 18px">
-                Resources
-              </div>
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#9AA0AA" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="6 9 12 15 18 9" />
-              </svg>
-            </div>
-            <div style="align-items: center; border-radius: 6px; box-sizing: border-box; display: flex; gap: 4px; padding-block: 6px; padding-inline: 12px">
-              <div style="box-sizing: border-box; color: #677080; display: inline-block; font-family: &quot;Inter&quot;, system-ui, sans-serif; font-size: 14px; font-weight: 500; line-height: 18px">
-                Explore
-              </div>
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#9AA0AA" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="6 9 12 15 18 9" />
-              </svg>
+            <div className="text-center">
+              <p className="font-semibold text-xs text-navy">40% complete</p>
+              <p className="text-[10px] text-gray-400">Est. 15 min remaining</p>
             </div>
           </div>
         </div>
-        <div style="align-items: center; box-sizing: border-box; display: flex; gap: 16px">
-          <div style="align-items: center; background-color: #6B2D8B; border-radius: 8px; box-sizing: border-box; display: flex; gap: 8px; padding-block: 10px; padding-inline: 20px">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="11" cy="11" r="8" />
-              <line x1="21" y1="21" x2="16.65" y2="16.65" />
-            </svg>
-            <div style="box-sizing: border-box; color: #FFFFFF; display: inline-block; font-family: &quot;Inter&quot;, system-ui, sans-serif; font-size: 14px; font-weight: 600; line-height: 18px">
-              Job Search
+
+        {/* Task 1 — priority */}
+        <div className="task-anim-1 priority-glow border-2 border-purple/40 rounded-2xl p-4 mb-3 bg-purple-faint/40">
+          <div className="flex items-start gap-4">
+            <div className="w-8 h-8 rounded-full bg-purple text-white flex items-center justify-center font-heading font-700 text-sm shrink-0 mt-0.5">1</div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="font-heading font-700 text-sm text-navy">Full Application</h3>
+                <span className="px-2 py-0.5 bg-green text-white text-[10px] font-semibold uppercase tracking-wider rounded-md">#1 Priority</span>
+              </div>
+              <p className="text-xs text-gray-500 mt-0.5">Employment history, credentials, and license verification</p>
+              <ProgressBar pct={40} className="mt-3 mb-1" />
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-purple font-medium">40% complete · Personal info done</span>
+                <span className="text-gray-400">Credentials &amp; license next</span>
+              </div>
             </div>
+            <button className="btn-primary bg-purple text-white rounded-xl px-4 py-2 text-sm font-semibold flex items-center gap-1.5 shrink-0 whitespace-nowrap">
+              Continue <IconArrowRight />
+            </button>
           </div>
-          <div style="align-items: center; box-sizing: border-box; display: flex; gap: 10px">
-            <div style="align-items: center; background-image: linear-gradient(in oklab 135deg, oklab(51.1% 0.120 -0.088) 0%, oklab(42.9% 0.103 -0.115) 100%); border-radius: 50%; box-sizing: border-box; display: flex; flex-shrink: 0; height: 36px; justify-content: center; width: 36px">
-              <div style="box-sizing: border-box; color: #FFFFFF; display: inline-block; font-family: &quot;MontserratRoman-Bold&quot;, &quot;Montserrat&quot;, system-ui, sans-serif; font-size: 13px; font-weight: 700; line-height: 16px">
-                OC
-              </div>
+        </div>
+
+        {/* Task 2 */}
+        <div className="task-anim-2 border border-gray-100 rounded-2xl p-4 mb-3 bg-white hover:border-purple/20 transition-colors">
+          <div className="flex items-center gap-4">
+            <div className="w-8 h-8 rounded-full border-2 border-gray-200 text-gray-400 flex items-center justify-center font-heading font-700 text-sm shrink-0">2</div>
+            <div className="flex-1 min-w-0">
+              <h3 className="font-heading font-700 text-sm text-navy">Professional References</h3>
+              <p className="text-xs text-gray-500 mt-0.5">2 of 3 added · Add 1 more clinical supervisor or charge nurse</p>
             </div>
-            <div style="box-sizing: border-box; display: flex; flex-direction: column; gap: 1px">
-              <div style="box-sizing: border-box; color: #172031; display: inline-block; font-family: &quot;Inter&quot;, system-ui, sans-serif; font-size: 13px; font-weight: 600; line-height: 16px">
-                Hello, Olivia
-              </div>
-              <div style="box-sizing: border-box; color: #677080; display: inline-block; font-family: &quot;Inter&quot;, system-ui, sans-serif; font-size: 11px; line-height: 14px">
-                RN, Telemetry
-              </div>
+            <button className="btn-secondary border border-purple/40 text-purple rounded-xl px-4 py-2 text-sm font-semibold flex items-center gap-1.5 shrink-0">
+              Add <IconArrowRight />
+            </button>
+          </div>
+        </div>
+
+        {/* Task 3 */}
+        <div className="task-anim-3 border border-gray-100 rounded-2xl p-4 bg-white hover:border-purple/20 transition-colors">
+          <div className="flex items-center gap-4">
+            <div className="w-8 h-8 rounded-full border-2 border-gray-200 text-gray-400 flex items-center justify-center font-heading font-700 text-sm shrink-0">3</div>
+            <div className="flex-1 min-w-0">
+              <h3 className="font-heading font-700 text-sm text-navy">Skills Checklist</h3>
+              <p className="text-xs text-gray-500 mt-0.5">Self-assess your Telemetry competencies · Takes ~10 min</p>
             </div>
+            <button className="btn-secondary border border-gray-200 text-gray-500 rounded-xl px-4 py-2 text-sm font-semibold flex items-center gap-1.5 shrink-0">
+              Start <IconArrowRight />
+            </button>
           </div>
         </div>
       </div>
-      <div style="align-items: center; box-sizing: border-box; display: flex; flex-direction: column; flex-shrink: 0; height: fit-content; padding-block: 0; padding-inline: 0; width: 100%">
-        <div style="align-items: start; background-color: #263349; border-radius: 12px; box-sizing: border-box; display: flex; flex-direction: column; flex-shrink: 0; gap: 12px; justify-content: space-between; padding-block: 14px; padding-inline: 24px; width: 1344px">
-          <div style="align-items: center; background-color: #8DC63F; border-radius: 4px; box-sizing: border-box; display: flex; flex-direction: column; flex-shrink: 0; gap: 0; height: 18px; justify-content: center; padding-inline: 8px; width: fit-content">
-            <div style="box-sizing: border-box; color: #FFFFFF; display: inline-block; font-family: &quot;MontserratRoman-Bold&quot;, &quot;Montserrat&quot;, system-ui, sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.07em; line-height: 12px; text-transform: uppercase">
-              You applied
-            </div>
-          </div>
-          <div style="align-items: center; box-sizing: border-box; display: flex; gap: 16px; justify-content: space-between; width: 100%">
-            <div style="align-items: center; box-sizing: border-box; display: flex; gap: 8px">
-              <div style="box-sizing: border-box; color: #FFFFFF; display: inline-block; font-family: &quot;MontserratRoman-Bold&quot;, &quot;Montserrat&quot;, system-ui, sans-serif; font-size: 15px; font-weight: 700; letter-spacing: -0.01em; line-height: 18px">
-                Travel RN — Telemetry / PCU
-              </div>
-              <div style="box-sizing: border-box; color: #FFFFFF66; display: inline-block; font-family: &quot;Inter&quot;, system-ui, sans-serif; font-size: 13px; line-height: 16px">
-                ·
-              </div>
-              <div style="box-sizing: border-box; color: #FFFFFF80; display: inline-block; font-family: &quot;Inter&quot;, system-ui, sans-serif; font-size: 13px; line-height: 16px">
-                Abbott Northwestern Hospital, Minneapolis, MN
-              </div>
-            </div>
-            <div style="align-items: center; box-sizing: border-box; display: flex; flex-shrink: 0; gap: 20px">
-              <div style="align-items: center; box-sizing: border-box; display: flex; gap: 6px">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF66" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="12" y1="1" x2="12" y2="23" />
-                  <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-                </svg>
-                <div style="box-sizing: border-box; color: #FFFFFF8C; display: inline-block; font-family: &quot;Inter&quot;, system-ui, sans-serif; font-size: 12px; line-height: 16px">
-                  $2,418–$2,750/wk
-                </div>
-              </div>
-              <div style="align-items: center; box-sizing: border-box; display: flex; gap: 6px">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF66" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="10" />
-                  <polyline points="12 6 12 12 16 14" />
-                </svg>
-                <div style="box-sizing: border-box; color: #FFFFFF8C; display: inline-block; font-family: &quot;Inter&quot;, system-ui, sans-serif; font-size: 12px; line-height: 16px">
-                  3×12 Nights · 13 weeks
-                </div>
-              </div>
-              <div style="align-items: center; box-sizing: border-box; display: flex; gap: 6px">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF66" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                  <line x1="16" y1="2" x2="16" y2="6" />
-                  <line x1="8" y1="2" x2="8" y2="6" />
-                  <line x1="3" y1="10" x2="21" y2="10" />
-                </svg>
-                <div style="box-sizing: border-box; color: #FFFFFF8C; display: inline-block; font-family: &quot;Inter&quot;, system-ui, sans-serif; font-size: 12px; line-height: 16px">
-                  Starts Apr 7, 2026
-                </div>
-              </div>
-            </div>
-          </div>
+
+      {/* Job recommendations */}
+      <JobsSection
+        heading="More jobs like this"
+        subheading="Roles that match your Telemetry background · Minnesota &amp; nearby"
+      />
+
+      {/* Auto-submit strip */}
+      <div className="bg-white rounded-2xl border border-gray-100 px-5 py-4 flex items-center gap-4 card-anim-4">
+        <div className="w-8 h-8 rounded-full bg-green-faint border border-green/30 flex items-center justify-center text-green-dark shrink-0">
+          <IconCheck />
         </div>
-        <div style="align-items: flex-start; box-sizing: border-box; display: flex; flex-basis: 0%; flex-grow: 1; flex-shrink: 1; gap: 28px; padding-bottom: 40px; padding-left: 48px; padding-right: 48px; padding-top: 24px">
-          <div style="box-sizing: border-box; display: flex; flex-basis: 0%; flex-direction: column; flex-grow: 1; flex-shrink: 1; min-width: 0px">
-            <div style="align-items: center; box-sizing: border-box; display: flex; justify-content: space-between; margin-bottom: 28px">
-              <div style="box-sizing: border-box">
-                <div style="box-sizing: border-box; color: #172031; font-family: &quot;MontserratRoman-ExtraBold&quot;, &quot;Montserrat&quot;, system-ui, sans-serif; font-size: 26px; font-weight: 800; letter-spacing: -0.02em; line-height: 32px; margin-bottom: 4px; margin-left: 0px; margin-right: 0px; margin-top: 0px">
-                  Complete to get submitted
-                </div>
-                <div style="box-sizing: border-box; color: #677080; font-family: &quot;Inter&quot;, system-ui, sans-serif; font-size: 14px; line-height: 18px; margin-bottom: 0px; margin-left: 0px; margin-right: 0px; margin-top: 0px">
-                  Finish these steps and we'll submit you to Abbott within the hour.
-                </div>
-              </div>
-              <div style="align-items: center; box-sizing: border-box; display: flex; gap: 12px">
-                <div style="align-items: flex-end; box-sizing: border-box; display: flex; flex-direction: column; gap: 2px">
-                  <div style="box-sizing: border-box; color: #172031; display: inline-block; font-family: &quot;MontserratRoman-Bold&quot;, &quot;Montserrat&quot;, system-ui, sans-serif; font-size: 13px; font-weight: 700; line-height: 16px">
-                    40% complete
-                  </div>
-                  <div style="box-sizing: border-box; color: #677080; display: inline-block; font-family: &quot;Inter&quot;, system-ui, sans-serif; font-size: 11px; line-height: 14px">
-                    Est. 15 min remaining
-                  </div>
-                </div>
-                <div style="box-sizing: border-box; flex-shrink: 0; height: 48px; position: relative; width: 48px">
-                  <svg width="48" height="48" viewBox="0 0 48 48">
-                    <circle cx="24" cy="24" r="20" fill="none" stroke="#E5E7E9" strokeWidth="4" />
-                    <circle cx="24" cy="24" r="20" fill="none" stroke="#8DC63F" strokeWidth="4" strokeDasharray="125.7" strokeDashoffset="75.4" strokeLinecap="round" transform="rotate(-90 24 24)" />
-                  </svg>
-                  <div style="box-sizing: border-box; color: #000000; display: inline-block; font-family: system-ui, sans-serif; font-size: 16px; line-height: 20px">
-                     
-                  </div>
-                  <div style="box-sizing: border-box; color: #172031; display: inline-block; font-family: &quot;MontserratRoman-ExtraBold&quot;, &quot;Montserrat&quot;, system-ui, sans-serif; font-size: 10px; font-weight: 800; left: 50%; line-height: 12px; position: absolute; top: 50%; translate: -50% -50%">
-                    40%
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div style="align-items: center; box-sizing: border-box; display: flex; gap: 16px; margin-bottom: 12px">
-              <div style="align-items: center; box-sizing: border-box; display: flex; flex-direction: column; flex-shrink: 0">
-                <div style="align-items: center; background-color: #6B2D8B; border-radius: 50%; box-sizing: border-box; display: flex; flex-shrink: 0; height: 36px; justify-content: center; width: 36px">
-                  <div style="box-sizing: border-box; color: #FFFFFF; display: inline-block; font-family: &quot;MontserratRoman-ExtraBold&quot;, &quot;Montserrat&quot;, system-ui, sans-serif; font-size: 14px; font-weight: 800; line-height: 18px">
-                    1
-                  </div>
-                </div>
-                <div style="background-image: linear-gradient(in oklab 180deg, oklab(42.9% 0.103 -0.115) 0%, oklab(97% -.0003 -0.003) 100%); box-sizing: border-box; flex-shrink: 0; height: 32px; margin-top: 4px; width: 1.5px" />
-              </div>
-              <div style="background-color: #FFFFFF; border-color: #6B2D8B; border-radius: 14px; border-style: solid; border-width: 1.5px; box-shadow: #6B2D8B1A 0px 2px 12px; box-sizing: border-box; flex-basis: 0%; flex-grow: 1; flex-shrink: 1; margin-bottom: 0px; overflow: clip">
-                <div style="align-items: center; box-sizing: border-box; display: flex; justify-content: space-between; padding-bottom: 16px; padding-left: 24px; padding-right: 24px; padding-top: 20px">
-                  <div style="box-sizing: border-box; display: flex; flex-direction: column; gap: 4px">
-                    <div style="align-items: center; box-sizing: border-box; display: flex; gap: 8px">
-                      <div style="box-sizing: border-box; color: #172031; display: inline-block; font-family: &quot;MontserratRoman-Bold&quot;, &quot;Montserrat&quot;, system-ui, sans-serif; font-size: 16px; font-weight: 700; line-height: 20px">
-                        Full Application
-                      </div>
-                      <div style="background-color: #FFF3E0; border-radius: 20px; box-sizing: border-box; display: inline-block; padding-block: 2px; padding-inline: 8px">
-                        <div style="box-sizing: border-box; color: #E65100; display: inline-block; font-family: &quot;Inter&quot;, system-ui, sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.04em; line-height: 12px; text-transform: uppercase">
-                          #1 Priority
-                        </div>
-                      </div>
-                    </div>
-                    <div style="box-sizing: border-box; color: #677080; display: inline-block; font-family: &quot;Inter&quot;, system-ui, sans-serif; font-size: 13px; line-height: 16px">
-                      Employment history, credentials, and license verification
-                    </div>
-                  </div>
-                  <div style="align-items: center; background-color: #6B2D8B; border-radius: 8px; box-sizing: border-box; display: flex; flex-shrink: 0; gap: 6px; padding-block: 10px; padding-inline: 22px">
-                    <div style="box-sizing: border-box; color: #FFFFFF; display: inline-block; font-family: &quot;Inter&quot;, system-ui, sans-serif; font-size: 13px; font-weight: 600; line-height: 16px">
-                      Continue
-                    </div>
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="9 18 15 12 9 6" />
-                    </svg>
-                  </div>
-                </div>
-                <div style="border-top-color: #EFE6F5; border-top-style: solid; border-top-width: 1px; box-sizing: border-box; padding-bottom: 14px; padding-left: 24px; padding-right: 24px; padding-top: 10px">
-                  <div style="align-items: center; box-sizing: border-box; display: flex; justify-content: space-between; margin-bottom: 6px">
-                    <div style="box-sizing: border-box; color: #6B2D8B; display: inline-block; font-family: &quot;Inter&quot;, system-ui, sans-serif; font-size: 12px; font-weight: 600; line-height: 16px">
-                      40% complete · Personal info done
-                    </div>
-                    <div style="box-sizing: border-box; color: #677080; display: inline-block; font-family: &quot;Inter&quot;, system-ui, sans-serif; font-size: 12px; line-height: 16px">
-                      Credentials & license next
-                    </div>
-                  </div>
-                  <div style="background-color: #EFE6F5; border-radius: 99px; box-sizing: border-box; height: 5px; overflow: clip; width: 100%">
-                    <div style="background-image: linear-gradient(in oklab 90deg, oklab(42.9% 0.103 -0.115) 0%, oklab(56.5% 0.125 -0.131) 100%); border-radius: 99px; box-sizing: border-box; height: 100%; width: 40%" />
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div style="align-items: center; box-sizing: border-box; display: flex; gap: 16px; margin-bottom: 12px">
-              <div style="align-items: center; background-color: #E8E9EB; border-radius: 50%; box-sizing: border-box; display: flex; flex-shrink: 0; height: 36px; justify-content: center; width: 36px">
-                <div style="box-sizing: border-box; color: #677080; display: inline-block; font-family: &quot;MontserratRoman-ExtraBold&quot;, &quot;Montserrat&quot;, system-ui, sans-serif; font-size: 14px; font-weight: 800; line-height: 18px">
-                  2
-                </div>
-              </div>
-              <div style="align-items: center; background-color: #FFFFFF; border-color: #E8E9EB; border-radius: 14px; border-style: solid; border-width: 1.5px; box-sizing: border-box; display: flex; flex-basis: 0%; flex-grow: 1; flex-shrink: 1; justify-content: space-between; padding-block: 18px; padding-inline: 24px">
-                <div style="box-sizing: border-box; display: flex; flex-direction: column; gap: 3px">
-                  <div style="box-sizing: border-box; color: #172031; display: inline-block; font-family: &quot;MontserratRoman-Bold&quot;, &quot;Montserrat&quot;, system-ui, sans-serif; font-size: 15px; font-weight: 700; line-height: 18px">
-                    Professional References
-                  </div>
-                  <div style="box-sizing: border-box; color: #677080; display: inline-block; font-family: &quot;Inter&quot;, system-ui, sans-serif; font-size: 13px; line-height: 16px">
-                    2 of 3 added · Add 1 more clinical supervisor or charge nurse
-                  </div>
-                </div>
-                <div style="align-items: center; border-color: #E8E9EB; border-radius: 8px; border-style: solid; border-width: 1.5px; box-sizing: border-box; display: flex; flex-shrink: 0; gap: 6px; padding-block: 9px; padding-inline: 18px">
-                  <div style="box-sizing: border-box; color: #475264; display: inline-block; font-family: &quot;Inter&quot;, system-ui, sans-serif; font-size: 13px; font-weight: 600; line-height: 16px">
-                    Add
-                  </div>
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#475264" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="9 18 15 12 9 6" />
-                  </svg>
-                </div>
-              </div>
-            </div>
-            <div style="align-items: center; box-sizing: border-box; display: flex; gap: 16px; margin-bottom: 44px">
-              <div style="box-sizing: border-box; flex-shrink: 0">
-                <div style="align-items: center; background-color: #E8E9EB; border-radius: 50%; box-sizing: border-box; display: flex; height: 36px; justify-content: center; width: 36px">
-                  <div style="box-sizing: border-box; color: #677080; display: inline-block; font-family: &quot;MontserratRoman-ExtraBold&quot;, &quot;Montserrat&quot;, system-ui, sans-serif; font-size: 14px; font-weight: 800; line-height: 18px">
-                    3
-                  </div>
-                </div>
-              </div>
-              <div style="align-items: center; background-color: #FFFFFF; border-color: #E8E9EB; border-radius: 14px; border-style: solid; border-width: 1.5px; box-sizing: border-box; display: flex; flex-basis: 0%; flex-grow: 1; flex-shrink: 1; justify-content: space-between; padding-block: 18px; padding-inline: 24px">
-                <div style="box-sizing: border-box; display: flex; flex-direction: column; gap: 3px">
-                  <div style="box-sizing: border-box; color: #172031; display: inline-block; font-family: &quot;MontserratRoman-Bold&quot;, &quot;Montserrat&quot;, system-ui, sans-serif; font-size: 15px; font-weight: 700; line-height: 18px">
-                    Skills Checklist
-                  </div>
-                  <div style="box-sizing: border-box; color: #677080; display: inline-block; font-family: &quot;Inter&quot;, system-ui, sans-serif; font-size: 13px; line-height: 16px">
-                    Self-assess your Telemetry competencies · Takes ~10 min
-                  </div>
-                </div>
-                <div style="align-items: center; border-color: #E8E9EB; border-radius: 8px; border-style: solid; border-width: 1.5px; box-sizing: border-box; display: flex; flex-shrink: 0; gap: 6px; padding-block: 9px; padding-inline: 18px">
-                  <div style="box-sizing: border-box; color: #475264; display: inline-block; font-family: &quot;Inter&quot;, system-ui, sans-serif; font-size: 13px; font-weight: 600; line-height: 16px">
-                    Start
-                  </div>
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#475264" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="9 18 15 12 9 6" />
-                  </svg>
-                </div>
-              </div>
-            </div>
-            <div style="align-items: center; box-sizing: border-box; display: flex; justify-content: space-between; margin-bottom: 16px">
-              <div style="box-sizing: border-box">
-                <div style="box-sizing: border-box; color: #172031; font-family: &quot;MontserratRoman-ExtraBold&quot;, &quot;Montserrat&quot;, system-ui, sans-serif; font-size: 18px; font-weight: 800; letter-spacing: -0.02em; line-height: 22px; margin-bottom: 3px; margin-left: 0px; margin-right: 0px; margin-top: 0px">
-                  More jobs like this
-                </div>
-                <div style="box-sizing: border-box; color: #677080; font-family: &quot;Inter&quot;, system-ui, sans-serif; font-size: 13px; line-height: 16px; margin-bottom: 0px; margin-left: 0px; margin-right: 0px; margin-top: 0px">
-                  Roles that match your Telemetry background · Minnesota & nearby
-                </div>
-              </div>
-              <div style="align-items: center; box-sizing: border-box; display: flex; gap: 5px">
-                <div style="box-sizing: border-box; color: #6B2D8B; display: inline-block; font-family: &quot;Inter&quot;, system-ui, sans-serif; font-size: 13px; font-weight: 600; line-height: 16px">
-                  See all
-                </div>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#6B2D8B" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="9 18 15 12 9 6" />
-                </svg>
-              </div>
-            </div>
-            <div style="box-sizing: border-box; display: flex; flex-direction: column; gap: 14px; width: 1020px">
-              <div style="box-sizing: border-box; display: flex; gap: 16px">
-                <div style="background-color: #FFFFFF; border-radius: 12px; box-shadow: #0000000F 0px 1px 4px; box-sizing: border-box; display: flex; flex-basis: 0%; flex-direction: column; flex-grow: 1; flex-shrink: 1; padding-block: 20px; padding-inline: 20px">
-                  <div style="box-sizing: border-box; display: flex; margin-bottom: 12px">
-                    <div style="background-color: #EDE4F3; border-radius: 20px; box-sizing: border-box; display: inline-block; padding-block: 3px; padding-inline: 9px">
-                      <div style="box-sizing: border-box; color: #6B2D8B; display: inline-block; font-family: &quot;MontserratRoman-Bold&quot;, &quot;Montserrat&quot;, system-ui, sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.08em; line-height: 12px; text-transform: uppercase">
-                        Travel
-                      </div>
-                    </div>
-                  </div>
-                  <div style="box-sizing: border-box; color: #172031; font-family: &quot;MontserratRoman-ExtraBold&quot;, &quot;Montserrat&quot;, system-ui, sans-serif; font-size: 15px; font-weight: 800; letter-spacing: -0.01em; line-height: round(up, 114.99999999999999%, 1px); margin-bottom: 3px; text-transform: uppercase">
-                    Telemetry RN
-                  </div>
-                  <div style="box-sizing: border-box; color: #677080; font-family: &quot;Inter&quot;, system-ui, sans-serif; font-size: 10px; font-weight: 600; letter-spacing: 0.07em; line-height: 12px; margin-bottom: 14px; text-transform: uppercase">
-                    Telemetry · Med-Surg
-                  </div>
-                  <div style="box-sizing: border-box; margin-bottom: 14px">
-                    <div style="box-sizing: border-box">
-                      <div style="box-sizing: border-box; color: #62A60E; display: inline-block; font-family: &quot;MontserratRoman-ExtraBold&quot;, &quot;Montserrat&quot;, system-ui, sans-serif; font-size: 22px; font-weight: 800; line-height: round(up, 100%, 1px)">
-                        $2,450
-                      </div>
-                      <div style="box-sizing: border-box; color: #9BA8B5; display: inline-block; font-family: &quot;MontserratRoman-SemiBold&quot;, &quot;Montserrat&quot;, system-ui, sans-serif; font-size: 13px; font-weight: 600; line-height: round(up, 100%, 1px)">
-                        –2,750
-                      </div>
-                    </div>
-                    <div style="box-sizing: border-box; color: #9BA8B5; font-family: &quot;Inter&quot;, system-ui, sans-serif; font-size: 10px; letter-spacing: 0.02em; line-height: 12px; margin-top: 2px">
-                      per week est. pkg
-                    </div>
-                  </div>
-                  <div style="background-color: #F0F2F5; box-sizing: border-box; flex-shrink: 0; height: 1px; margin-bottom: 12px" />
-                  <div style="box-sizing: border-box; display: flex; flex-direction: column; gap: 6px">
-                    <div style="align-items: center; box-sizing: border-box; display: flex; gap: 7px">
-                      <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
-                        <path d="M8 1.5C5.5 1.5 3.5 3.5 3.5 6c0 3.5 4.5 8.5 4.5 8.5s4.5-5 4.5-8.5c0-2.5-2-4.5-4.5-4.5zm0 5.5a1.5 1.5 0 110-3 1.5 1.5 0 010 3z" fill="#9BA8B5" />
-                      </svg>
-                      <div style="box-sizing: border-box; color: #677080; display: inline-block; font-family: &quot;Inter&quot;, system-ui, sans-serif; font-size: 11px; line-height: 14px">
-                        Phoenix, AZ
-                      </div>
-                    </div>
-                    <div style="align-items: center; box-sizing: border-box; display: flex; gap: 7px">
-                      <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
-                        <circle cx="8" cy="8" r="6" stroke="#9BA8B5" strokeWidth="1.5" />
-                        <path d="M8 5V8l2 1.2" stroke="#9BA8B5" strokeWidth="1.5" strokeLinecap="round" />
-                      </svg>
-                      <div style="box-sizing: border-box; color: #677080; display: inline-block; font-family: &quot;Inter&quot;, system-ui, sans-serif; font-size: 11px; line-height: 14px">
-                        3×12 Nights
-                      </div>
-                    </div>
-                    <div style="align-items: center; box-sizing: border-box; display: flex; gap: 7px">
-                      <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
-                        <rect x="2" y="3" width="12" height="10" rx="1.5" stroke="#9BA8B5" strokeWidth="1.5" />
-                        <path d="M5 2V4M11 2V4M2 7h12" stroke="#9BA8B5" strokeWidth="1.5" strokeLinecap="round" />
-                      </svg>
-                      <div style="box-sizing: border-box; color: #677080; display: inline-block; font-family: &quot;Inter&quot;, system-ui, sans-serif; font-size: 11px; line-height: 14px">
-                        Starts Apr 7 · 13 wks
-                      </div>
-                    </div>
-                    <div style="align-items: center; box-sizing: border-box; display: flex; gap: 7px">
-                      <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
-                        <path d="M3 13V7l5-4 5 4v6M6 13v-3h4v3" stroke="#9BA8B5" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                      <div style="box-sizing: border-box; color: #677080; display: inline-block; font-family: &quot;Inter&quot;, system-ui, sans-serif; font-size: 11px; line-height: 14px">
-                        Banner Desert Medical Ctr
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div style="background-color: #FFFFFF; border-radius: 12px; box-shadow: #0000000F 0px 1px 4px; box-sizing: border-box; display: flex; flex-basis: 0%; flex-direction: column; flex-grow: 1; flex-shrink: 1; padding-block: 20px; padding-inline: 20px">
-                  <div style="box-sizing: border-box; display: flex; margin-bottom: 12px">
-                    <div style="background-color: #EDE4F3; border-radius: 20px; box-sizing: border-box; display: inline-block; padding-block: 3px; padding-inline: 9px">
-                      <div style="box-sizing: border-box; color: #6B2D8B; display: inline-block; font-family: &quot;MontserratRoman-Bold&quot;, &quot;Montserrat&quot;, system-ui, sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.08em; line-height: 12px; text-transform: uppercase">
-                        Travel
-                      </div>
-                    </div>
-                  </div>
-                  <div style="box-sizing: border-box; color: #172031; font-family: &quot;MontserratRoman-ExtraBold&quot;, &quot;Montserrat&quot;, system-ui, sans-serif; font-size: 15px; font-weight: 800; letter-spacing: -0.01em; line-height: round(up, 114.99999999999999%, 1px); margin-bottom: 3px; text-transform: uppercase">
-                    Stepdown / PCU RN
-                  </div>
-                  <div style="box-sizing: border-box; color: #677080; font-family: &quot;Inter&quot;, system-ui, sans-serif; font-size: 10px; font-weight: 600; letter-spacing: 0.07em; line-height: 12px; margin-bottom: 14px; text-transform: uppercase">
-                    Progressive Care · Stepdown
-                  </div>
-                  <div style="box-sizing: border-box; margin-bottom: 14px">
-                    <div style="box-sizing: border-box">
-                      <div style="box-sizing: border-box; color: #62A60E; display: inline-block; font-family: &quot;MontserratRoman-ExtraBold&quot;, &quot;Montserrat&quot;, system-ui, sans-serif; font-size: 22px; font-weight: 800; line-height: round(up, 100%, 1px)">
-                        $2,300
-                      </div>
-                      <div style="box-sizing: border-box; color: #9BA8B5; display: inline-block; font-family: &quot;MontserratRoman-SemiBold&quot;, &quot;Montserrat&quot;, system-ui, sans-serif; font-size: 13px; font-weight: 600; line-height: round(up, 100%, 1px)">
-                        –2,600
-                      </div>
-                    </div>
-                    <div style="box-sizing: border-box; color: #9BA8B5; font-family: &quot;Inter&quot;, system-ui, sans-serif; font-size: 10px; letter-spacing: 0.02em; line-height: 12px; margin-top: 2px">
-                      per week est. pkg
-                    </div>
-                  </div>
-                  <div style="background-color: #F0F2F5; box-sizing: border-box; flex-shrink: 0; height: 1px; margin-bottom: 12px" />
-                  <div style="box-sizing: border-box; display: flex; flex-direction: column; gap: 6px">
-                    <div style="align-items: center; box-sizing: border-box; display: flex; gap: 7px">
-                      <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
-                        <path d="M8 1.5C5.5 1.5 3.5 3.5 3.5 6c0 3.5 4.5 8.5 4.5 8.5s4.5-5 4.5-8.5c0-2.5-2-4.5-4.5-4.5zm0 5.5a1.5 1.5 0 110-3 1.5 1.5 0 010 3z" fill="#9BA8B5" />
-                      </svg>
-                      <div style="box-sizing: border-box; color: #677080; display: inline-block; font-family: &quot;Inter&quot;, system-ui, sans-serif; font-size: 11px; line-height: 14px">
-                        Austin, TX
-                      </div>
-                    </div>
-                    <div style="align-items: center; box-sizing: border-box; display: flex; gap: 7px">
-                      <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
-                        <circle cx="8" cy="8" r="6" stroke="#9BA8B5" strokeWidth="1.5" />
-                        <path d="M8 5V8l2 1.2" stroke="#9BA8B5" strokeWidth="1.5" strokeLinecap="round" />
-                      </svg>
-                      <div style="box-sizing: border-box; color: #677080; display: inline-block; font-family: &quot;Inter&quot;, system-ui, sans-serif; font-size: 11px; line-height: 14px">
-                        3×12 Days/Eves
-                      </div>
-                    </div>
-                    <div style="align-items: center; box-sizing: border-box; display: flex; gap: 7px">
-                      <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
-                        <rect x="2" y="3" width="12" height="10" rx="1.5" stroke="#9BA8B5" strokeWidth="1.5" />
-                        <path d="M5 2V4M11 2V4M2 7h12" stroke="#9BA8B5" strokeWidth="1.5" strokeLinecap="round" />
-                      </svg>
-                      <div style="box-sizing: border-box; color: #677080; display: inline-block; font-family: &quot;Inter&quot;, system-ui, sans-serif; font-size: 11px; line-height: 14px">
-                        Starts Apr 14 · 13 wks
-                      </div>
-                    </div>
-                    <div style="align-items: center; box-sizing: border-box; display: flex; gap: 7px">
-                      <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
-                        <path d="M3 13V7l5-4 5 4v6M6 13v-3h4v3" stroke="#9BA8B5" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                      <div style="box-sizing: border-box; color: #677080; display: inline-block; font-family: &quot;Inter&quot;, system-ui, sans-serif; font-size: 11px; line-height: 14px">
-                        St. David's Medical Center
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div style="background-color: #FFFFFF; border-radius: 12px; box-shadow: #0000000F 0px 1px 4px; box-sizing: border-box; display: flex; flex-basis: 0%; flex-direction: column; flex-grow: 1; flex-shrink: 1; padding-block: 20px; padding-inline: 20px">
-                  <div style="box-sizing: border-box; display: flex; margin-bottom: 12px">
-                    <div style="background-color: #FFF3E0; border-radius: 20px; box-sizing: border-box; display: inline-block; padding-block: 3px; padding-inline: 9px">
-                      <div style="box-sizing: border-box; color: #C45900; display: inline-block; font-family: &quot;MontserratRoman-Bold&quot;, &quot;Montserrat&quot;, system-ui, sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.08em; line-height: 12px; text-transform: uppercase">
-                        PRN
-                      </div>
-                    </div>
-                  </div>
-                  <div style="box-sizing: border-box; color: #172031; font-family: &quot;MontserratRoman-ExtraBold&quot;, &quot;Montserrat&quot;, system-ui, sans-serif; font-size: 15px; font-weight: 800; letter-spacing: -0.01em; line-height: round(up, 114.99999999999999%, 1px); margin-bottom: 3px; text-transform: uppercase">
-                    Cardiac Step-Down RN
-                  </div>
-                  <div style="box-sizing: border-box; color: #677080; font-family: &quot;Inter&quot;, system-ui, sans-serif; font-size: 10px; font-weight: 600; letter-spacing: 0.07em; line-height: 12px; margin-bottom: 14px; text-transform: uppercase">
-                    Cardiovascular · Step-Down
-                  </div>
-                  <div style="box-sizing: border-box; margin-bottom: 14px">
-                    <div style="box-sizing: border-box">
-                      <div style="box-sizing: border-box; color: #62A60E; display: inline-block; font-family: &quot;MontserratRoman-ExtraBold&quot;, &quot;Montserrat&quot;, system-ui, sans-serif; font-size: 22px; font-weight: 800; line-height: round(up, 100%, 1px)">
-                        $80
-                      </div>
-                      <div style="box-sizing: border-box; color: #9BA8B5; display: inline-block; font-family: &quot;MontserratRoman-SemiBold&quot;, &quot;Montserrat&quot;, system-ui, sans-serif; font-size: 13px; font-weight: 600; line-height: round(up, 100%, 1px)">
-                        –95
-                      </div>
-                    </div>
-                    <div style="box-sizing: border-box; color: #9BA8B5; font-family: &quot;Inter&quot;, system-ui, sans-serif; font-size: 10px; letter-spacing: 0.02em; line-height: 12px; margin-top: 2px">
-                      per hour
-                    </div>
-                  </div>
-                  <div style="background-color: #F0F2F5; box-sizing: border-box; flex-shrink: 0; height: 1px; margin-bottom: 12px" />
-                  <div style="box-sizing: border-box; display: flex; flex-direction: column; gap: 6px">
-                    <div style="align-items: center; box-sizing: border-box; display: flex; gap: 7px">
-                      <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
-                        <path d="M8 1.5C5.5 1.5 3.5 3.5 3.5 6c0 3.5 4.5 8.5 4.5 8.5s4.5-5 4.5-8.5c0-2.5-2-4.5-4.5-4.5zm0 5.5a1.5 1.5 0 110-3 1.5 1.5 0 010 3z" fill="#9BA8B5" />
-                      </svg>
-                      <div style="box-sizing: border-box; color: #677080; display: inline-block; font-family: &quot;Inter&quot;, system-ui, sans-serif; font-size: 11px; line-height: 14px">
-                        Nashville, TN
-                      </div>
-                    </div>
-                    <div style="align-items: center; box-sizing: border-box; display: flex; gap: 7px">
-                      <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
-                        <circle cx="8" cy="8" r="6" stroke="#9BA8B5" strokeWidth="1.5" />
-                        <path d="M8 5V8l2 1.2" stroke="#9BA8B5" strokeWidth="1.5" strokeLinecap="round" />
-                      </svg>
-                      <div style="box-sizing: border-box; color: #677080; display: inline-block; font-family: &quot;Inter&quot;, system-ui, sans-serif; font-size: 11px; line-height: 14px">
-                        Flexible PRN
-                      </div>
-                    </div>
-                    <div style="align-items: center; box-sizing: border-box; display: flex; gap: 7px">
-                      <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
-                        <rect x="2" y="3" width="12" height="10" rx="1.5" stroke="#9BA8B5" strokeWidth="1.5" />
-                        <path d="M5 2V4M11 2V4M2 7h12" stroke="#9BA8B5" strokeWidth="1.5" strokeLinecap="round" />
-                      </svg>
-                      <div style="box-sizing: border-box; color: #677080; display: inline-block; font-family: &quot;Inter&quot;, system-ui, sans-serif; font-size: 11px; line-height: 14px">
-                        Immediate start available
-                      </div>
-                    </div>
-                    <div style="align-items: center; box-sizing: border-box; display: flex; gap: 7px">
-                      <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
-                        <path d="M3 13V7l5-4 5 4v6M6 13v-3h4v3" stroke="#9BA8B5" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                      <div style="box-sizing: border-box; color: #677080; display: inline-block; font-family: &quot;Inter&quot;, system-ui, sans-serif; font-size: 11px; line-height: 14px">
-                        Vanderbilt Univ. Medical Ctr
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div style="align-items: center; background-color: #FAF7FC; border-color: #E8DFF0; border-radius: 10px; border-style: solid; border-width: 1px; box-sizing: border-box; display: flex; gap: 14px; padding-block: 13px; padding-inline: 18px">
-                <div style="align-items: center; background-color: #EDE4F3; border-radius: 8px; box-sizing: border-box; display: flex; flex-shrink: 0; height: 30px; justify-content: center; width: 30px">
-                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                    <path d="M2 8.5L6.5 13 14 4" stroke="#6B2D8B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </div>
-                <div style="box-sizing: border-box; flex-basis: 0%; flex-grow: 1; flex-shrink: 1">
-                  <div style="box-sizing: border-box; color: #172031; display: inline-block; font-family: &quot;MontserratRoman-Bold&quot;, &quot;Montserrat&quot;, system-ui, sans-serif; font-size: 12px; font-weight: 700; line-height: 16px">
-                    Auto Submit
-                  </div>
-                  <div style="box-sizing: border-box; color: #000000; display: inline-block; font-family: system-ui, sans-serif; font-size: 16px; line-height: 20px">
-                     
-                  </div>
-                  <div style="background-color: #EDE4F3; border-radius: 20px; box-sizing: border-box; display: inline-block; margin-left: 6px; padding-block: 1px; padding-inline: 6px; vertical-align: middle">
-                    <div style="box-sizing: border-box; color: #6B2D8B; display: inline-block; font-family: &quot;MontserratRoman-Bold&quot;, &quot;Montserrat&quot;, system-ui, sans-serif; font-size: 9px; font-weight: 700; letter-spacing: 0.05em; line-height: 12px">
-                      NEW
-                    </div>
-                  </div>
-                  <div style="box-sizing: border-box; color: #000000; display: inline-block; font-family: system-ui, sans-serif; font-size: 16px; line-height: 20px">
-                     
-                  </div>
-                  <div style="box-sizing: border-box; color: #677080; display: inline-block; font-family: &quot;Inter&quot;, system-ui, sans-serif; font-size: 11px; line-height: 14px; margin-left: 8px">
-                    Set your preferences and we'll apply to matching Travel RN roles automatically.
-                  </div>
-                </div>
-                <div style="border-color: #6B2D8B; border-radius: 6px; border-style: solid; border-width: 1.5px; box-sizing: border-box; padding-block: 6px; padding-inline: 14px; white-space-collapse: collapse">
-                  <div style="box-sizing: border-box; color: #6B2D8B; display: inline-block; font-family: &quot;MontserratRoman-Bold&quot;, &quot;Montserrat&quot;, system-ui, sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.02em; line-height: 14px; text-wrap: nowrap; width: fit-content">
-                    Check Eligibility
-                  </div>
-                </div>
-              </div>
-            </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <span className="font-semibold text-sm text-navy">Auto Submit</span>
+            <span className="px-1.5 py-0.5 bg-purple-faint text-purple text-[10px] font-semibold uppercase tracking-wider rounded-md">New</span>
           </div>
-          <div style="box-sizing: border-box; display: flex; flex-direction: column; flex-shrink: 0; gap: 16px; width: 296px">
-            <div style="background-color: #FFFFFF; border-color: #E8E9EB; border-radius: 14px; border-style: solid; border-width: 1.5px; box-sizing: border-box; overflow: clip">
-              <div style="border-bottom-color: #F0F0F0; border-bottom-style: solid; border-bottom-width: 1px; box-sizing: border-box; padding-bottom: 14px; padding-left: 20px; padding-right: 20px; padding-top: 18px">
-                <div style="align-items: center; box-sizing: border-box; display: flex; gap: 10px; margin-bottom: 10px">
-                  <div style="align-items: center; background-color: #6B2D8B; border-radius: 10px; box-sizing: border-box; display: flex; flex-shrink: 0; height: 34px; justify-content: center; width: 34px">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
-                    </svg>
-                  </div>
-                  <div style="box-sizing: border-box">
-                    <div style="box-sizing: border-box; color: #172031; font-family: &quot;MontserratRoman-Bold&quot;, &quot;Montserrat&quot;, system-ui, sans-serif; font-size: 13px; font-weight: 700; line-height: 16px">
-                      MedSol AI
-                    </div>
-                    <div style="align-items: center; box-sizing: border-box; display: flex; gap: 4px; margin-top: 1px">
-                      <div style="background-color: #8DC63F; border-radius: 50%; box-sizing: border-box; flex-shrink: 0; height: 5px; width: 5px" />
-                      <div style="box-sizing: border-box; color: #677080; display: inline-block; font-family: &quot;Inter&quot;, system-ui, sans-serif; font-size: 10px; line-height: 12px">
-                        Answers instantly, no wait
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div style="box-sizing: border-box; color: #677080; font-family: &quot;Inter&quot;, system-ui, sans-serif; font-size: 12px; line-height: round(up, 160%, 1px); margin-bottom: 0px; margin-left: 0px; margin-right: 0px; margin-top: 0px">
-                  Questions about the application? I can answer FAQs about documents, timelines, and licensing right now.
-                </div>
-              </div>
-              <div style="box-sizing: border-box; display: flex; flex-direction: column; gap: 5px; padding-bottom: 14px; padding-left: 16px; padding-right: 16px; padding-top: 12px">
-                <div style="background-color: #F4F5F7; border-radius: 8px; box-sizing: border-box; padding-block: 9px; padding-inline: 12px">
-                  <div style="box-sizing: border-box; color: #475264; display: inline-block; font-family: &quot;Inter&quot;, system-ui, sans-serif; font-size: 12px; line-height: 16px">
-                    "What documents do I need?"
-                  </div>
-                </div>
-                <div style="background-color: #F4F5F7; border-radius: 8px; box-sizing: border-box; padding-block: 9px; padding-inline: 12px">
-                  <div style="box-sizing: border-box; color: #475264; display: inline-block; font-family: &quot;Inter&quot;, system-ui, sans-serif; font-size: 12px; line-height: 16px">
-                    "How long does submission take?"
-                  </div>
-                </div>
-                <div style="align-items: center; background-color: #6B2D8B; border-radius: 8px; box-sizing: border-box; display: flex; gap: 6px; justify-content: center; margin-top: 4px; padding-block: 10px; padding-inline: 10px; width: 100%">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                  </svg>
-                  <div style="box-sizing: border-box; color: #FFFFFF; display: inline-block; font-family: &quot;Inter&quot;, system-ui, sans-serif; font-size: 12px; font-weight: 600; line-height: 16px">
-                    Ask a question
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div style="background-color: #FFFFFF; border-color: #E8E9EB; border-radius: 14px; border-style: solid; border-width: 1.5px; box-sizing: border-box; display: flex; flex-direction: column; gap: 12px; padding-block: 18px; padding-inline: 20px">
-              <div style="box-sizing: border-box; color: #172031; display: inline-block; font-family: &quot;MontserratRoman-Bold&quot;, &quot;Montserrat&quot;, system-ui, sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.07em; line-height: 14px; text-transform: uppercase">
-                Your Recruiter
-              </div>
-              <div style="align-items: center; box-sizing: border-box; display: flex; gap: 12px">
-                <div style="box-sizing: border-box; flex-shrink: 0; height: 44px; position: relative; width: 44px">
-                  <div style="align-items: center; background-image: linear-gradient(in oklab 135deg, oklab(51.1% 0.120 -0.088) 0%, oklab(42.9% 0.103 -0.115) 100%); border-radius: 50%; box-sizing: border-box; display: flex; height: 44px; justify-content: center; width: 44px">
-                    <div style="box-sizing: border-box; color: #FFFFFF; display: inline-block; font-family: &quot;MontserratRoman-Bold&quot;, &quot;Montserrat&quot;, system-ui, sans-serif; font-size: 15px; font-weight: 700; line-height: 18px">
-                      JS
-                    </div>
-                  </div>
-                  <div style="background-color: #8DC63F; border-color: #FFFFFF; border-radius: 50%; border-style: solid; border-width: 2px; bottom: 1px; box-sizing: border-box; height: 10px; position: absolute; right: 1px; width: 10px" />
-                </div>
-                <div style="box-sizing: border-box">
-                  <div style="box-sizing: border-box; color: #172031; font-family: &quot;Inter&quot;, system-ui, sans-serif; font-size: 14px; font-weight: 600; line-height: 18px">
-                    Jamie Sullivan
-                  </div>
-                  <div style="box-sizing: border-box; color: #677080; font-family: &quot;Inter&quot;, system-ui, sans-serif; font-size: 12px; line-height: 16px">
-                    Travel Nurse Recruiter
-                  </div>
-                </div>
-              </div>
-              <div style="box-sizing: border-box; color: #677080; font-family: &quot;Inter&quot;, system-ui, sans-serif; font-size: 12px; font-style: italic; line-height: round(up, 155%, 1px); margin-bottom: 0px; margin-left: 0px; margin-right: 0px; margin-top: 0px">
-                "Finish your application and I'll have you submitted to Abbott within the hour."
-              </div>
-              <div style="box-sizing: border-box; display: flex; gap: 8px">
-                <div style="background-color: #8DC63F; border-radius: 8px; box-sizing: border-box; flex-shrink: 0; padding-block: 9px; width: 121px">
-                  <div style="box-sizing: border-box; color: #FFFFFF; display: inline-block; font-family: &quot;Inter&quot;, system-ui, sans-serif; font-size: 12px; font-weight: 600; line-height: 16px; text-align: center; width: 100%">
-                    Message
-                  </div>
-                </div>
-                <div style="border-color: #E8E9EB; border-radius: 8px; border-style: solid; border-width: 1.5px; box-sizing: border-box; flex-shrink: 0; padding-block: 8px; width: 124px">
-                  <div style="box-sizing: border-box; color: #475264; display: inline-block; font-family: &quot;Inter&quot;, system-ui, sans-serif; font-size: 12px; font-weight: 500; line-height: 16px; text-align: center; width: 100%">
-                    Call
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          <p className="text-xs text-gray-500 mt-0.5">Set your preferences and we'll apply to matching Travel RN roles automatically.</p>
         </div>
-      </div>
-      <div style="align-items: center; background-color: #172031; box-sizing: border-box; display: flex; justify-content: space-between; margin-top: auto; padding-block: 20px; padding-inline: 48px; width: 100%">
-        <div style="box-sizing: border-box; color: #FFFFFF4D; display: inline-block; font-family: &quot;Inter&quot;, system-ui, sans-serif; font-size: 12px; line-height: 16px">
-          © 2026 Medical Solutions
-        </div>
-        <div style="align-items: center; box-sizing: border-box; display: flex; gap: 20px">
-          <div style="box-sizing: border-box; color: #FFFFFF4D; display: inline-block; font-family: &quot;Inter&quot;, system-ui, sans-serif; font-size: 12px; line-height: 16px">
-            Email Us
-          </div>
-          <div style="box-sizing: border-box; color: #FFFFFF4D; display: inline-block; font-family: &quot;Inter&quot;, system-ui, sans-serif; font-size: 12px; line-height: 16px">
-            Call Us
-          </div>
-          <div style="box-sizing: border-box; color: #FFFFFF4D; display: inline-block; font-family: &quot;Inter&quot;, system-ui, sans-serif; font-size: 12px; line-height: 16px">
-            Terms of Use
-          </div>
-          <div style="box-sizing: border-box; color: #FFFFFF4D; display: inline-block; font-family: &quot;Inter&quot;, system-ui, sans-serif; font-size: 12px; line-height: 16px">
-            Privacy Policy
-          </div>
-        </div>
+        <button className="btn-secondary shrink-0 border border-purple/40 text-purple rounded-xl px-4 py-2 text-sm font-semibold whitespace-nowrap">
+          Check Eligibility
+        </button>
       </div>
     </div>
+  );
+}
+
+/* ── Jobs section (shared) ── */
+function JobsSection({ heading, subheading }) {
+  const jobs = [
+    {
+      type: 'TRAVEL', title: 'Telemetry RN', specialty: 'Telemetry · Med-Surg',
+      payPrimary: '$2,450', paySecondary: '2,750', payLabel: 'per week est. pkg',
+      location: 'Phoenix, AZ', schedule: '3×12 Nights', startDate: 'Starts Apr 7 · 13 wks',
+      facility: 'Banner Desert Medical Ctr',
+      whyRec: 'Matches your Telemetry specialty and preferred night shifts',
+    },
+    {
+      type: 'TRAVEL', title: 'Stepdown / PCU RN', specialty: 'Progressive Care · Stepdown',
+      payPrimary: '$2,300', paySecondary: '2,600', payLabel: 'per week est. pkg',
+      location: 'Austin, TX', schedule: '3×12 Days/Eves', startDate: 'Starts Apr 14 · 13 wks',
+      facility: "St. David's Medical Center",
+      whyRec: 'High demand in your specialty · Competitive pay in top market',
+    },
+    {
+      type: 'PRN', title: 'Cardiac Step-Down RN', specialty: 'Cardiovascular · Step-Down',
+      payPrimary: '$80', paySecondary: '95', payLabel: 'per hour',
+      location: 'Nashville, TN', schedule: 'Flexible PRN', startDate: 'Immediate start available',
+      facility: 'Vanderbilt Univ. Medical Ctr',
+      whyRec: 'Flexible scheduling available · Strong facility rating',
+    },
+    {
+      type: 'TRAVEL', title: 'ICU / Critical Care RN', specialty: 'Intensive Care · CVICU',
+      payPrimary: '$2,600', paySecondary: '2,900', payLabel: 'per week est. pkg',
+      location: 'Seattle, WA', schedule: '3×12 Nights', startDate: 'Starts May 1 · 13 wks',
+      facility: 'UW Medical Center',
+      whyRec: 'Adjacent specialty — great for expanding your critical care experience',
+    },
+  ];
+
+  const delays = ['card-anim-1','card-anim-2','card-anim-3','card-anim-4'];
+
+  return (
+    <div>
+      <div className="flex items-end justify-between mb-3">
+        <div>
+          <h2 className="font-heading font-700 text-base text-navy">{heading}</h2>
+          <p className="text-xs text-gray-500 mt-0.5" dangerouslySetInnerHTML={{ __html: subheading }} />
+        </div>
+        <button className="text-purple text-sm font-semibold flex items-center gap-1 hover:gap-2 transition-all">
+          See all <IconArrowRight />
+        </button>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-2 gap-4">
+        {jobs.map((job, i) => (
+          <JobCard key={job.title} job={job} delay={delays[i]} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ── State B: New signup ── */
+function StateB() {
+  return (
+    <div className="state-content flex flex-col gap-6">
+
+      {/* Welcome / onboarding hero */}
+      <div className="bg-white rounded-2xl border border-gray-100 p-6 hero-anim">
+        <div className="flex items-start justify-between gap-4 mb-1">
+          <div>
+            <h2 className="font-heading font-700 text-xl text-navy">Let's find the right fit for you, Olivia.</h2>
+            <p className="text-sm text-gray-500 mt-1.5 max-w-lg">We're matching you with Travel RN roles that fit your Telemetry background. A few quick steps help us get it right.</p>
+          </div>
+          <div className="shrink-0 flex flex-col items-center gap-1">
+            <div className="relative w-[52px] h-[52px]">
+              <CircularProgress pct={15} />
+              <span className="absolute inset-0 flex items-center justify-center font-heading font-700 text-sm text-purple">15%</span>
+            </div>
+            <p className="text-[10px] text-gray-400 text-center">Profile strength</p>
+          </div>
+        </div>
+
+        <div className="mt-5 flex flex-col gap-3">
+          {/* Onboarding task 1 — priority */}
+          <div className="task-anim-1 priority-glow border-2 border-purple/40 rounded-2xl p-4 bg-purple-faint/40">
+            <div className="flex items-start gap-4">
+              <div className="w-8 h-8 rounded-full bg-purple text-white flex items-center justify-center font-heading font-700 text-sm shrink-0 mt-0.5">1</div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 className="font-heading font-700 text-sm text-navy">Full Application</h3>
+                  <span className="px-2 py-0.5 bg-green text-white text-[10px] font-semibold uppercase tracking-wider rounded-md">Start here</span>
+                </div>
+                <p className="text-xs text-gray-500 mt-0.5">Helps us surface roles that match your credentials and availability</p>
+                <ProgressBar pct={40} className="mt-3 mb-1" />
+                <p className="text-xs text-purple font-medium">40% complete · Keep going</p>
+              </div>
+              <button className="btn-primary bg-purple text-white rounded-xl px-4 py-2 text-sm font-semibold flex items-center gap-1.5 shrink-0 whitespace-nowrap">
+                Continue <IconArrowRight />
+              </button>
+            </div>
+          </div>
+
+          {/* Onboarding task 2 */}
+          <div className="task-anim-2 border border-gray-100 rounded-2xl p-4 bg-white hover:border-purple/20 transition-colors">
+            <div className="flex items-center gap-4">
+              <div className="w-8 h-8 rounded-full border-2 border-gray-200 text-gray-400 flex items-center justify-center font-heading font-700 text-sm shrink-0">2</div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-heading font-700 text-sm text-navy">Professional References</h3>
+                <p className="text-xs text-gray-500 mt-0.5">2 of 3 added · Helps facilities trust your application faster</p>
+              </div>
+              <button className="btn-secondary border border-purple/40 text-purple rounded-xl px-4 py-2 text-sm font-semibold flex items-center gap-1.5 shrink-0">
+                Add <IconArrowRight />
+              </button>
+            </div>
+          </div>
+
+          {/* Onboarding task 3 */}
+          <div className="task-anim-3 border border-gray-100 rounded-2xl p-4 bg-white hover:border-purple/20 transition-colors">
+            <div className="flex items-center gap-4">
+              <div className="w-8 h-8 rounded-full border-2 border-gray-200 text-gray-400 flex items-center justify-center font-heading font-700 text-sm shrink-0">3</div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-heading font-700 text-sm text-navy">Skills Checklist</h3>
+                <p className="text-xs text-gray-500 mt-0.5">Tell us your Telemetry strengths so we can match you to the right units</p>
+              </div>
+              <button className="btn-secondary border border-gray-200 text-gray-500 rounded-xl px-4 py-2 text-sm font-semibold flex items-center gap-1.5 shrink-0">
+                Start <IconArrowRight />
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Job recommendations — leads for State B */}
+      <JobsSection
+        heading="Jobs we think you'll love"
+        subheading="Based on your Telemetry specialty · We'll refine these as your profile grows"
+      />
+    </div>
+  );
+}
+
+/* ── AI Sidebar card ── */
+function AISidebarCard() {
+  const [inputVal, setInputVal] = useState('');
+  const chips = [
+    'What documents do I need?',
+    'How long does submission take?',
+    'What's a typical Telemetry pay range?',
+  ];
+  return (
+    <div className="sidebar-anim-1 bg-white rounded-2xl border border-gray-100 p-5">
+      <div className="flex items-center gap-3 mb-3">
+        <div className="w-9 h-9 rounded-xl bg-purple flex items-center justify-center text-white shrink-0">
+          <IconSparkle />
+        </div>
+        <div>
+          <h3 className="font-heading font-700 text-sm text-navy">MedSol AI</h3>
+          <p className="text-[10px] text-green-dark font-medium flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-green inline-block"></span>
+            Answers instantly, no wait
+          </p>
+        </div>
+      </div>
+      <p className="text-xs text-gray-500 mb-3">Questions about the application? I can answer FAQs about documents, timelines, and licensing right now.</p>
+      <div className="flex flex-col gap-2 mb-3">
+        {chips.map(c => (
+          <button
+            key={c}
+            onClick={() => setInputVal(c)}
+            className="ai-chip border border-gray-100 rounded-lg px-3 py-2 text-xs text-gray-600 text-left transition-colors"
+          >
+            "{c}"
+          </button>
+        ))}
+      </div>
+      <div className="flex gap-2">
+        <input
+          value={inputVal}
+          onChange={e => setInputVal(e.target.value)}
+          placeholder="Ask a question…"
+          className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-purple/50 transition-colors min-w-0"
+        />
+        <button className="btn-primary bg-purple text-white rounded-xl px-3 py-2 text-xs font-semibold whitespace-nowrap">
+          Ask
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* ── Recruiter card ── */
+function RecruiterCard() {
+  return (
+    <div className="sidebar-anim-2 bg-white rounded-2xl border border-gray-100 p-5">
+      <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-3">Your Recruiter</p>
+      <div className="flex items-center gap-3 mb-3">
+        <div className="w-11 h-11 rounded-full bg-navy text-white flex items-center justify-center font-heading font-700 text-base shrink-0">
+          JS
+        </div>
+        <div>
+          <p className="font-heading font-700 text-sm text-navy">Jamie Sullivan</p>
+          <p className="text-xs text-gray-500">Travel Nurse Recruiter</p>
+        </div>
+      </div>
+      <p className="text-xs text-gray-500 italic mb-4">"Finish your application and I'll have you submitted to Abbott within the hour."</p>
+      <div className="flex gap-2">
+        <button className="btn-primary flex-1 bg-green text-white rounded-xl py-2.5 text-xs font-semibold flex items-center justify-center gap-1.5">
+          <IconMessage /> Message
+        </button>
+        <button className="btn-secondary flex-1 border border-gray-200 text-gray-600 rounded-xl py-2.5 text-xs font-semibold flex items-center justify-center gap-1.5 hover:bg-gray-50">
+          <IconPhone /> Call
+        </button>
+      </div>
+      <div className="mt-3 pt-3 border-t border-gray-50 flex flex-col gap-1.5">
+        <a href="tel:6125550198" className="text-xs text-gray-500 flex items-center gap-2 hover:text-purple transition-colors">
+          <IconPhone /> (612) 555-0198
+        </a>
+        <a href="mailto:jamie.sullivan@medsol.com" className="text-xs text-gray-500 flex items-center gap-2 hover:text-purple transition-colors">
+          <IconMail /> jamie.sullivan@medsol.com
+        </a>
+      </div>
+    </div>
+  );
+}
+
+/* ── Quick resources sidebar ── */
+function QuickResources() {
+  const items = [
+    { label: 'Housing Stipend Guide', icon: <IconInfo /> },
+    { label: 'Licensing by State', icon: <IconInfo /> },
+    { label: 'Pay Package Breakdown', icon: <IconDollar /> },
+    { label: 'Travel Tips for RNs', icon: <IconStar /> },
+  ];
+  return (
+    <div className="sidebar-anim-3 bg-white rounded-2xl border border-gray-100 p-5">
+      <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-3">Quick Resources</p>
+      <div className="flex flex-col gap-1">
+        {items.map(item => (
+          <button key={item.label} className="flex items-center gap-2.5 px-1 py-2 rounded-lg text-xs text-gray-600 hover:bg-purple-faint hover:text-purple transition-colors text-left">
+            <span className="text-gray-400">{item.icon}</span>
+            {item.label}
+            <IconArrowRight />
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ── Promotional banner ── */
+function PromoBanner({ onDismiss }) {
+  return (
+    <div className="banner-anim bg-purple-faint border border-purple/15 rounded-2xl px-5 py-3.5 flex items-center gap-3">
+      <div className="w-8 h-8 rounded-lg bg-purple/10 flex items-center justify-center text-purple shrink-0">
+        <IconSparkle />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-semibold text-navy">New: Auto Submit is here</p>
+        <p className="text-xs text-gray-500 mt-0.5">Set your travel preferences once. We'll match and apply to qualifying roles for you.</p>
+      </div>
+      <button className="btn-secondary shrink-0 border border-purple/30 text-purple rounded-xl px-3 py-1.5 text-xs font-semibold whitespace-nowrap">
+        Learn more
+      </button>
+      <button onClick={onDismiss} className="shrink-0 text-gray-400 hover:text-gray-600 transition-colors ml-1" title="Dismiss">
+        <IconX />
+      </button>
+    </div>
+  );
+}
+
+/* ── State toggle ── */
+function StateToggle({ state, onChange }) {
+  const aRef = useRef(null);
+  const bRef = useRef(null);
+  const [pillStyle, setPillStyle] = useState({ left: 3, width: 0 });
+
+  useEffect(() => {
+    const el = state === 'A' ? aRef.current : bRef.current;
+    if (el) {
+      const parent = el.closest('.toggle-container');
+      const pr = parent.getBoundingClientRect();
+      const er = el.getBoundingClientRect();
+      setPillStyle({ left: er.left - pr.left, width: er.width });
+    }
+  }, [state]);
+
+  return (
+    <div className="toggle-container relative bg-gray-100 rounded-xl p-[3px] inline-flex">
+      <div className="toggle-pill" style={{ left: pillStyle.left, width: pillStyle.width }} />
+      <button
+        ref={aRef}
+        onClick={() => onChange('A')}
+        className={`relative z-10 px-4 py-2 rounded-[9px] text-xs font-semibold transition-colors ${state === 'A' ? 'text-navy' : 'text-gray-500'}`}
+      >
+        On assignment
+      </button>
+      <button
+        ref={bRef}
+        onClick={() => onChange('B')}
+        className={`relative z-10 px-4 py-2 rounded-[9px] text-xs font-semibold transition-colors ${state === 'B' ? 'text-navy' : 'text-gray-500'}`}
+      >
+        New signup
+      </button>
+    </div>
+  );
+}
+
+/* ── Main App ── */
+function App() {
+  const [clinicianState, setClinicianState] = useState('A');
+  const [bannerVisible, setBannerVisible] = useState(true);
+  const [bannerDismissing, setBannerDismissing] = useState(false);
+
+  const handleDismiss = () => {
+    setBannerDismissing(true);
+    setTimeout(() => setBannerVisible(false), 350);
+  };
+
+  return (
+    <div className="min-h-screen bg-bg">
+
+      {/* ── Navigation ── */}
+      <nav className="nav-anim sticky top-0 z-50 bg-white border-b border-gray-100 shadow-sm">
+        <div className="max-w-[1440px] mx-auto px-6 h-16 flex items-center justify-between gap-6">
+          {/* Logo + nav links */}
+          <div className="flex items-center gap-8">
+            <div className="flex items-center gap-2.5 shrink-0">
+              <div className="w-8 h-8 rounded-lg bg-purple flex items-center justify-center text-white font-heading font-700 text-sm">M</div>
+              <span className="font-heading font-700 text-navy text-sm hidden sm:block">Medical Solutions</span>
+            </div>
+            <div className="hidden md:flex items-center gap-6">
+              {['Profile','Assignments','Resources','Explore'].map(link => (
+                <button key={link} className="nav-link text-sm text-gray-600 font-medium flex items-center gap-1 py-1">
+                  {link} <IconChevronD />
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Right: Job Search + avatar */}
+          <div className="flex items-center gap-3">
+            <button className="btn-primary cta-pulse bg-purple text-white rounded-xl px-4 py-2 text-sm font-semibold flex items-center gap-2">
+              <IconSearch /> <span className="hidden sm:inline">Job Search</span>
+            </button>
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-full bg-navy text-white flex items-center justify-center font-heading font-700 text-xs shrink-0">OC</div>
+              <div className="hidden sm:block">
+                <p className="text-xs font-semibold text-navy leading-none">Hello, Olivia</p>
+                <p className="text-[10px] text-gray-400 mt-0.5">RN, Telemetry</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      {/* ── Page body ── */}
+      <main className="max-w-[1440px] mx-auto px-6 py-6">
+
+        {/* Greeting + toggle */}
+        <div className="hero-anim flex items-center justify-between gap-4 mb-6 flex-wrap">
+          <div>
+            <h1 className="font-heading font-800 text-2xl text-navy">
+              {clinicianState === 'A' ? 'Good morning, Olivia 👋' : 'Welcome to Medical Solutions, Olivia 👋'}
+            </h1>
+            <p className="text-sm text-gray-500 mt-1">
+              {clinicianState === 'A'
+                ? "You're 40% of the way to submission. Let's finish strong."
+                : "We're glad you're here. Let's find your first travel assignment."}
+            </p>
+          </div>
+          <div className="flex flex-col items-end gap-1">
+            <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">Demo state</p>
+            <StateToggle state={clinicianState} onChange={setClinicianState} />
+          </div>
+        </div>
+
+        {/* Promo banner */}
+        {bannerVisible && (
+          <div className={`mb-6 ${bannerDismissing ? 'banner-dismissed' : ''}`}>
+            <PromoBanner onDismiss={handleDismiss} />
+          </div>
+        )}
+
+        {/* Two-column layout */}
+        <div className="flex gap-6 items-start">
+
+          {/* Main column */}
+          <div className="flex-1 min-w-0">
+            {clinicianState === 'A' ? <StateA key="A" /> : <StateB key="B" />}
+          </div>
+
+          {/* Sidebar */}
+          <aside className="w-[296px] shrink-0 hidden lg:flex flex-col gap-4">
+            <AISidebarCard />
+            <RecruiterCard />
+            <QuickResources />
+          </aside>
+        </div>
+      </main>
+
+      {/* ── Footer ── */}
+      <footer className="border-t border-gray-100 bg-white mt-10">
+        <div className="max-w-[1440px] mx-auto px-6 h-14 flex items-center justify-between">
+          <p className="text-xs text-gray-400">© 2026 Medical Solutions</p>
+          <div className="flex items-center gap-5">
+            {['Email Us','Call Us','Terms of Use','Privacy Policy'].map(l => (
+              <button key={l} className="text-xs text-gray-400 hover:text-purple transition-colors">{l}</button>
+            ))}
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
 </body>
 </html>
